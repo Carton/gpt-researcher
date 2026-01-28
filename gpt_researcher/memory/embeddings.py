@@ -88,8 +88,8 @@ class Memory:
 
                 _embeddings = OpenAIEmbeddings(
                     model=model,
-                    openai_api_key=os.getenv("OPENAI_API_KEY", "custom"),
-                    openai_api_base=os.getenv(
+                    openai_api_key=os.getenv("EMBEDDING_API_KEY") or os.getenv("OPENAI_API_KEY", "custom"),
+                    openai_api_base=os.getenv("EMBEDDING_BASE_URL") or os.getenv(
                         "OPENAI_BASE_URL", "http://localhost:1234/v1"
                     ),  # default for lmstudio
                     check_embedding_ctx_length=False,
