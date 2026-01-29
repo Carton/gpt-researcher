@@ -37,18 +37,18 @@ class CustomLogsHandler:
         self.timestamp = datetime.now().isoformat()
         # Initialize log file with metadata
         os.makedirs("outputs", exist_ok=True)
-        with open(self.log_file, 'w') as f:
+        with open(self.log_file, 'w', encoding='utf-8') as f:
             json.dump({
                 "timestamp": self.timestamp,
                 "events": [],
                 "content": {
-                    "query": "",
+                    "query": task,
                     "sources": [],
                     "context": [],
                     "report": "",
                     "costs": 0.0
                 }
-            }, f, indent=2)
+            }, f, indent=2, ensure_ascii=False)
 
     async def send_json(self, data: Dict[str, Any]) -> None:
         """Store log data and send to websocket"""
@@ -57,7 +57,7 @@ class CustomLogsHandler:
             await self.websocket.send_json(data)
             
         # Read current log file
-        with open(self.log_file, 'r') as f:
+        with open(self.log_file, 'r', encoding='utf-8') as f:
             log_data = json.load(f)
             
         # Update appropriate section based on data type
@@ -72,8 +72,8 @@ class CustomLogsHandler:
             log_data['content'].update(data)
             
         # Save updated log file
-        with open(self.log_file, 'w') as f:
-            json.dump(log_data, f, indent=2)
+        with open(self.log_file, 'w', encoding='utf-8') as f:
+            json.dump(log_data, f, indent=2, ensure_ascii=False)
 
 
 class Researcher:
@@ -110,20 +110,36 @@ class Researcher:
         }
 
 def sanitize_filename(filename: str) -> str:
-    # Split into components
-    prefix, timestamp, *task_parts = filename.split('_')
-    task = '_'.join(task_parts)
+    """Sanitize filename to be safe for Windows and Unix."""
+    # Split into components to preserve prefix and timestamp
+    parts = filename.split('_')
+    if len(parts) >= 3:
+        prefix = parts[0]
+        timestamp = parts[1]
+        task = '_'.join(parts[2:])
+    else:
+        prefix = "task"
+        timestamp = str(int(time.time()))
+        task = filename
+
+    # 1. Replace ALL whitespace (including \n, \r, \t) with spaces
+    task = re.sub(r"\s+", " ", task).strip()
     
-    # Calculate max length for task portion
-    # 255 - len(os.getcwd()) - len("\\gpt-researcher\\outputs\\") - len("task_") - len(timestamp) - len("_.json") - safety_margin
-    max_task_length = 255 - len(os.getcwd()) - 24 - 5 - 10 - 6 - 5  # ~189 chars for task
+    # 2. Strict character filtering: allow only alphanumeric, Chinese characters, spaces, dots, underscores, and hyphens
+    # Note: Chinese characters are allowed in Windows/Unix filenames normally, but we keep it safe.
+    task = re.sub(r'[^\w\s\u4e00-\u9fff.-]', '', task)
     
-    # Truncate task if needed
-    truncated_task = task[:max_task_length] if len(task) > max_task_length else task
+    # 3. Replace spaces with underscores for better compatibility
+    task = task.replace(" ", "_")
     
-    # Reassemble and clean the filename
-    sanitized = f"{prefix}_{timestamp}_{truncated_task}"
-    return re.sub(r"[^\w\s-]", "", sanitized).strip()
+    # 4. Truncate task to a very safe limit (e.g., 50 chars) to avoid path length issues
+    task = task[:50]
+    
+    # Reassemble
+    sanitized = f"{prefix}_{timestamp}_{task}"
+    
+    # Final cleanup: ensure no trailing dots or spaces which Windows hates
+    return sanitized.strip(". ")
 
 
 async def handle_start_command(websocket, data: str, manager):

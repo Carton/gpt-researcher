@@ -4,8 +4,20 @@ from typing import Dict, List, Any
 import time
 import logging
 import sys
+import io
 import warnings
 from pathlib import Path
+
+# Configure UTF-8 logging for Windows BEFORE any other logging setup
+# This must be done early to ensure all loggers use the correct encoding
+if sys.platform == "win32":
+    # Replace the default stream handler with one that uses UTF-8 encoding
+    # This handles Chinese characters and other Unicode content in log messages
+    _utf8_stream = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    _handler = logging.StreamHandler(_utf8_stream)
+    _handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    logging.root.handlers = [_handler]
+    logging.root.setLevel(logging.INFO)
 
 # Suppress Pydantic V2 migration warnings
 warnings.filterwarnings("ignore", message="Valid config keys have changed in V2")

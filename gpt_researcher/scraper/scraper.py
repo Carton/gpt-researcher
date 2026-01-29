@@ -127,8 +127,11 @@ class Scraper:
                         "title": title,
                     }
 
-                # Log results
-                self.logger.info(f"\nTitle: {title}")
+                # Log results - just replace non-breaking spaces
+                # UTF-8 encoding is handled at the logging level in app.py
+                safe_title = title.replace('\xa0', ' ') if title else "No Title"
+
+                self.logger.info(f"\nTitle: {safe_title}")
                 self.logger.info(
                     f"Content length: {len(content) if content else 0} characters"
                 )

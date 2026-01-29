@@ -32,8 +32,8 @@ class JSONResearchHandler:
         self._save_json()
 
     def _save_json(self):
-        with open(self.json_file, 'w') as f:
-            json.dump(self.research_data, f, indent=2)
+        with open(self.json_file, 'w', encoding='utf-8') as f:
+            json.dump(self.research_data, f, indent=2, ensure_ascii=False)
 
 def setup_research_logging():
     # Create logs directory if it doesn't exist
@@ -48,7 +48,7 @@ def setup_research_logging():
     json_file = logs_dir / f"research_{timestamp}.json"
     
     # Configure file handler for research logs
-    file_handler = logging.FileHandler(log_file)
+    file_handler = logging.FileHandler(log_file, encoding='utf-8')
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
     
