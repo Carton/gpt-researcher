@@ -28,8 +28,8 @@ def estimate_llm_cost(input_content: str, output_content: str) -> float:
         The estimated cost in USD.
     """
     encoding = tiktoken.get_encoding(ENCODING_MODEL)
-    input_tokens = encoding.encode(input_content)
-    output_tokens = encoding.encode(output_content)
+    input_tokens = encoding.encode(input_content or "")
+    output_tokens = encoding.encode(output_content or "")
     input_costs = len(input_tokens) * INPUT_COST_PER_TOKEN
     output_costs = len(output_tokens) * OUTPUT_COST_PER_TOKEN
     return input_costs + output_costs

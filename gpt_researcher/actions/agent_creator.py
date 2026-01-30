@@ -76,6 +76,8 @@ async def handle_json_error(response: str | None):
         if all parsing attempts fail.
     """
     try:
+        if not response:
+             return "Default Agent", "You are an AI critical thinker research assistant. Your sole purpose is to write well written, critically acclaimed, objective and structured reports on given text."
         agent_dict = json_repair.loads(response)
         if agent_dict.get("server") and agent_dict.get("agent_role_prompt"):
             return agent_dict["server"], agent_dict["agent_role_prompt"]
